@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personajes Rick y Morty</title>
+
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container{
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .card{
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.25);
+            margin: 15px;
+            width: 300px;
+            overflow: hidden;
+            transition: transform 0.2s "ease-in-out";
+        }
+
+        .card:hover{
+            transform: scale(1.05);
+        }
+
+        .card-content{
+            padding: 15px;
+        }
+
+        .card-content h3{
+            margin:0;
+        }
+
+        .card-content p{
+            margin:5px 0;
+            color: #555;
+        }
+
+        .search-container{
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .search-container input, .search-container select{
+            width: 80%;
+            max-width: 400px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+.selects option{
+
+    width: 300px;
+    display: flex;
+    flex-wrap:nowrap;
+    margin: 30px;
+    padding: 0 30px;
+}
+    </style>
+</head>
+<body>
+    <h1>Personajes de Rick y Morty</h1>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Buscar personajes por nombre..." onkeyup="filterCharacters()">
+        <div class="selects">
+        <select id="originSelect" onChange="filterCharacters()">
+            <option value="">
+                Todos los orígenes
+            </option>
+        </select>
+        <select id="genderSelect" onChange="filterCharacters()">
+            <option value="">
+                Todos los gender
+            </option>
+        </select>
+        <select id="Specieselect" onChange="filterCharacters()">
+            <option value="">
+                Todos los Species
+            </option>
+        </select>
+        <select id="StatuSelect" onChange="filterCharacters()">
+            <option value="">
+                Todos los Status
+            </option>
+        </select>
+
+    </div>
+    </div>
+
+    <div class="container" id="characterContainer">
+
+    </div>
+
+    <script>
+        let characters = [];
+        let origins = new Set();
+        let genders = new Set();
+        let species = new Set();
+        let status =  new Set();
+
+        function displayCharacters(characterstoDisplay){
+            const characterContainer = document.getElementById("characterContainer");
+
+            characterContainer.innerHTML='';
+
+            characterstoDisplay.forEach(character => {
+                    const card=document.createElement('div');
+                    card.className='card';
+
+                    card.innerHTML = `
+                        <img src="${character.image}" alt="${character.name}">
+                        <div class="card-content">
+                            <h3>${character.name}</h3>
+                            <p><strong>ID:${character.id}</strong></p>
+                            <p><strong>Status:${character.status}</strong></p>
+                            <p><strong>Species:${character.species}</strong></p>
+                            <p><strong>Gender:${character.gender}</strong></p>
+                            <p><strong>Origin:${character.origin.name}</strong></p>
+                        </div>
+                    `;
+                    characterContainer.appendChild(card);
+                });
+        }
+         //status
+         function updateStatus(){
+            characters.forEach(character =>{
+                status.add(character.status);
+            });
+
+            addOptionsStatuSelect();
+        }
+         function addOptionsStatuSelect(){
+            const StatuSelect = document.getElementById('StatuSelect');
+            StatuSelect.innerHTML = '<option value="">Todos los Status</option>';
+            status.forEach(status =>
+                {
+                    const option = document.createElement("option");
+                    option.value = status;
+                    option.textContent = status;
+                    StatuSelect.appendChild(option);
+                }
+            );
+        }     
+        //species     
+         function updateSpecies(){
+            characters.forEach(character =>{
+                species.add(character.species);
+            });
+
+            addOptionsSpecieselect();
+        }
+        function addOptionsSpecieselect(){
+            const Specieselect = document.getElementById('Specieselect');
+            Specieselect.innerHTML = '<option value="">Todos los Speccies</option>';
+            species.forEach(species =>
+                {
+                    const option = document.createElement("option");
+                    option.value = species;
+                    option.textContent = species;
+                    Specieselect.appendChild(option);
+                }
+            );
+        }        
+        //genero
+        function updateGenders(){
+            characters.forEach(character =>{
+                genders.add(character.gender);
+            });
+
+            addOptionsGenderSelect();
+        }
+        function addOptionsGenderSelect(){
+            const genderSelect = document.getElementById('genderSelect');
+            genderSelect.innerHTML = '<option value="">Todos los Generos</option>';
+            genders.forEach(gender =>
+                {
+                    const option = document.createElement("option");
+                    option.value = gender;
+                    option.textContent = gender;
+                    genderSelect.appendChild(option);
+                }
+            );
+        }
+        //origines
+        function updateOrigins(){
+            characters.forEach(character =>{
+                origins.add(character.origin.name);
+            });
+
+            addOptionsOriginSelect();
+        }
+        function addOptionsOriginSelect(){
+            const originSelect = document.getElementById('originSelect');
+            originSelect.innerHTML = '<option value="">Todos los orígenes</option>';
+            origins.forEach(origin =>
+                {
+                    const option = document.createElement("option");
+                    option.value = origin;
+                    option.textContent = origin;
+                    originSelect.appendChild(option);
+                }
+            );
+        }
+
+
+        async function fetchCharacters(url) {
+            try{
+                const response = await fetch(url);
+                const data = await response.json();
+                characters = characters.concat(data.results);
+                updateOrigins();//origen
+                updateGenders();//gender
+                updateSpecies();//species
+                updateStatus();//species
+
+
+                displayCharacters(characters);
+                if (data.info.next){
+                    fetchCharacters(data.info.next)
+                }
+            }
+            catch(error){
+                console.error('Error obteniendo los personajes: ', error);
+            }
+        }
+
+        function filterCharacters(){
+            const searchInput=document.getElementById("searchInput").value.toLowerCase();
+            const originSelect=document.getElementById("originSelect").value;//origin
+            const genderSelect=document.getElementById("genderSelect").value;//gender
+            const Specieselect=document.getElementById("Specieselect").value;//species
+            const StatuSelect=document.getElementById("StatuSelect").value;//status
+
+
+            const filteredCharacters = characters.filter(character => {
+                const matchesName = character.name.toLowerCase().includes(searchInput);
+                const matchesOrigin = originSelect === "" || character.origin.name === originSelect;//origin
+                const matchesGender= genderSelect === "" || character.gender === genderSelect;//gender
+                const matchesSpecies= Specieselect === "" || character.species === Specieselect;//species
+                const matchesStatus= StatuSelect === "" || character.status === StatuSelect;//status
+
+                return matchesName && matchesOrigin && matchesGender && matchesSpecies && matchesStatus;
+            });
+            displayCharacters(filteredCharacters);
+        }
+
+        fetchCharacters('https://rickandmortyapi.com/api/character');
+    </script>
+</body>
+</html>
